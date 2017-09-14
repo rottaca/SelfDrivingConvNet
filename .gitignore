@@ -1,2 +1,6 @@
 *.pyc
-outputDir/
+trainData*/
+tensorboard/
+models/*
+
+!models/*tflearn*

@@ -17,7 +17,7 @@ from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.normalization import local_response_normalization
 from tflearn.layers.estimator import regression
 
-def alexnet(width, height, learning_rate, checkpoint_path):
+def alexnet(width, height, learning_rate, checkpoint_path,tensorboard_dir):
     # Building 'AlexNet'
     network = input_data(shape=[None, width, height , 1],name='inputs')
     network = conv_2d(network, 96, 11, strides=4, activation='relu')
@@ -42,5 +42,6 @@ def alexnet(width, height, learning_rate, checkpoint_path):
 
     # Training
     model = tflearn.DNN(network, checkpoint_path=checkpoint_path,
+                        tensorboard_dir=tensorboard_dir,
                         max_checkpoints=1, tensorboard_verbose=2)
     return model

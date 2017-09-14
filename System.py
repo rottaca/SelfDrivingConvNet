@@ -14,7 +14,7 @@ class System:
         self.screen_y = screen_y
         self.proc_width= proc_width
         self.proc_height= proc_height
-
+        self.paused=False
         self.mask = cv2.imread(mask_img,cv2.IMREAD_GRAYSCALE)
         self.model = model
         if self.mask is None:
@@ -30,43 +30,77 @@ class System:
         #cv2.waitKey(1)
 
     def start(self):
-        pass
+        self.predictHistory = []
+        self.paused=False
 
     def stop(self):
         pass
 
     def process(self):
+
         if keyboard.is_pressed('i'):
-            time.sleep(5)
+            time.sleep(0.4)
+            if not keyboard.is_pressed('i'):
+                self.paused = not self.paused
+                if self.paused:
+                    print ""
+                    print "Paused controller"
+                    keyboard.release('up')
+                    keyboard.release('right')
+                    keyboard.release('left')
+                else:
+                    print ""
+                    print "Continue"
+
+        if self.paused:
+            time.sleep(0.01)
+            return False
 
         img = self.scc.grab()
         #cv2.imshow("raw",  self.mask)
         img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         #img = cv2.Canny(img,100,200)
-        #img = cv2.bitwise_and(img,img,mask=self.mask)
+        img = cv2.bitwise_and(img,img,mask=self.mask)
         #cv2.imshow("process", img)
 
         img = cv2.resize(img,(self.proc_width,self.proc_height))
         y = self.model.predict([img.reshape(self.proc_width,self.proc_height,1)])[0]
 
+        if len(self.predictHistory) > 3:
+            self.predictHistory.pop(0)
+        self.predictHistory.append(y)
+
+        s = [0,0,0]
+        for i in self.predictHistory:
+            s += i
+        s /= sum(s)
+
+        names=["left","straight","right"]
+        printWidth=80
+        print "-"*(printWidth+40)
         print "Prediction: {}".format(y)
-        y = list(np.around(y))
-        print "Rounded: {}".format(y)
+        for idx,i in enumerate(s):
+            print ("{: <8}: {: <"+str(printWidth)+"} - {}%").format(names[idx],"|"*int(np.around(i*printWidth)),100*i )
+        y = list(np.around(s))
+
 
         keyboard.release('up')
         keyboard.release('right')
         keyboard.release('left')
 
         if y == [1,0,0]:
-            print "left"
+            print "Action: left"
             keyboard.press('up')
             keyboard.press('left')
         elif y == [0,0,1]:
-            print "right"
+            print "Action: right"
             keyboard.press('up')
             keyboard.press('right')
         elif y == [0,1,0]:
-            print "straight"
+            print "Action: straight"
             keyboard.press('up')
         else:
-            print "dont know ?!"
+            print "Action: dont know ?!"
+
+        print "-"*(printWidth+40)
+        return True

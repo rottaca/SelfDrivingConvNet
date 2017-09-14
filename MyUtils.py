@@ -13,7 +13,7 @@ class ScreenCapture:
     def grab(self):
         sct_img = self.sct.grab(self.bbox)
         img = np.array(Image.frombytes('RGB', sct_img.size, sct_img.rgb))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return img
 
 def get_nice_string(list_or_iterator):
