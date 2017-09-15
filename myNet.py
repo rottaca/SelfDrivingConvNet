@@ -21,7 +21,7 @@ from tflearn.optimizers import SGD
 def mynet(width, height, outputs, learning_rate, checkpoint_path, tensorboard_dir):
     network = input_data(shape=[None, width, height , 1],name='inputs')
 
-    network = conv_2d(network, 128, 7, strides=4, activation='relu')
+    network = conv_2d(network, 96, 11, strides=4, activation='relu')
     network = max_pool_2d(network, 3, strides=2)
     network = local_response_normalization(network)
 
@@ -29,23 +29,22 @@ def mynet(width, height, outputs, learning_rate, checkpoint_path, tensorboard_di
     network = max_pool_2d(network, 3, strides=2)
     network = local_response_normalization(network)
 
-    network = conv_2d(network, 256, 3, activation='relu')
-    network = max_pool_2d(network, 3, strides=2)
-    network = local_response_normalization(network)
-
+    network = conv_2d(network, 384, 3, activation='relu')
+    network = conv_2d(network, 384, 3, activation='relu')
     network = conv_2d(network, 256, 3, activation='relu')
     network = max_pool_2d(network, 3, strides=2)
     network = local_response_normalization(network)
 
     network = fully_connected(network, 1024, activation='tanh')
     network = dropout(network, 0.5)
-    network = fully_connected(network, 1024, activation='tanh')
+    network = fully_connected(network, 512, activation='tanh')
     network = dropout(network, 0.5)
     network = fully_connected(network, outputs, activation='softmax')
 
     network = regression(network, optimizer='momentum',
                          loss='categorical_crossentropy',
-                         learning_rate=learning_rate,name='targets')
+                         learning_rate=learning_rate,
+                         name='targets')
 
     # Training
     model = tflearn.DNN(network, checkpoint_path=checkpoint_path,

@@ -38,6 +38,7 @@ class TrainingRecorder:
         self.paused=False
 
     def save(self):
+        print("")
         print("Saving data of size: {}".format(len(self.trainData)))
         np.save(self.rawDataFileName,self.trainData)
 
@@ -107,8 +108,14 @@ class TrainingRecorder:
             if sum(one_hot) != 1:
                 print "One hot vector is empty! No keymapping found for keys: {}".format(keys)
                 skippedCount+=1
+            else:
+                remapped_keys_and_imgs[typeIdx].append([img,one_hot])
 
-            remapped_keys_and_imgs[typeIdx].append([img,one_hot])
+        #for  data in remapped_keys_and_imgs:
+        #    for img, keys in data:
+        #        cv2.imshow("img",img)
+        #        print keys
+        #        cv2.waitKey(25)
 
         print "Done."
         print "Samples per type: " + str(map(len,remapped_keys_and_imgs))
@@ -116,7 +123,7 @@ class TrainingRecorder:
         minCnt = min(map(len,remapped_keys_and_imgs))
         print "Minimum samples per class: " + str(minCnt)
         print "Balancing..."
-        
+
         # Merge data
         balancedData = [];
         for d in remapped_keys_and_imgs:
@@ -165,5 +172,6 @@ class TrainingRecorder:
 
         model.fit({'inputs':X},{'targets':Y}, n_epoch=n_epoch,
                   validation_set=({'inputs':test_X},{'targets':test_Y}),
-                  snapshot_step=500, show_metric=True, run_id=run_id)
+                  snapshot_step=500, show_metric=True, run_id=run_id,
+                  shuffle=True)
         model.save('{}/{}.tflearn'.format(model_dir,model_name))

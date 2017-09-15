@@ -29,13 +29,29 @@ PROCESS_HEIGHT = 100
 
 INITIA_SLEEP=3
 
-KEYS=['up', 'down', 'left', 'right']
+# Keys to be looked for
+KEYS=[
+'up',
+'down',
+'left',
+'right'
+]
+# Mapping from steering commands (index) to valid key combinations
+# e.g. multiple commands to turn right or left are possible
 KEYS_TO_ONEHOT=[
-              [[1,0,0,0]],            # driving forwards
-             # [[0,1,0,0]],            # driving backwards
+              [[1,0,0,0]],                      # driving forwards
+             # [[0,1,0,0]],                     # driving backwards
               [[1,0,1,0],[0,0,1,0]],            # driving left
               [[1,0,0,1],[0,0,0,1]]             # driving right
               ]
+# Names for one hot vectors
+# -> Steering command names
+ONEHOT_NAMES = [
+                "fwd",
+            #   "bwd",
+                "left",
+                "right"
+                ]
 
 MASK_IMG = 'mask.png'
 
@@ -43,7 +59,7 @@ gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
 sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=True, allow_soft_placement=True))
 
 ID = "trackmania"
-EPOCHS = 9
+EPOCHS = 7
 TENSORBOARD_DIR = "tensorboard/"
 MODEL_DIR = 'models'
 MODEL_NAME = 'model_mynet'
@@ -64,7 +80,7 @@ def main():
         time.sleep(1)
 
     if args.train:
-        if len(args.run_suffix) == 0:
+        if args.run_suffix is None:
             print "Run name missing"
             exit(1)
         runTraining(args.run_suffix)
@@ -109,7 +125,7 @@ def runControl():
 
     MODEL.load('{}/{}.tflearn'.format(MODEL_DIR,MODEL_NAME))
 
-    s = System.System(SCREEN_WIDTH,SCREEN_HEIGHT,OFFSET_X,OFFSET_Y,PROCESS_WIDTH,PROCESS_HEIGHT,MASK_IMG,MODEL)
+    s = System.System(SCREEN_WIDTH,SCREEN_HEIGHT,OFFSET_X,OFFSET_Y,PROCESS_WIDTH,PROCESS_HEIGHT,MASK_IMG,MODEL,KEYS,KEYS_TO_ONEHOT,ONEHOT_NAMES)
     s.start()
     last_update = time.time()
     last_time = time.time()
