@@ -134,8 +134,9 @@ class TrainingRecorder:
         np.save(self.balancedDataFileName,balancedData)
         print "Done."
 
-    def trainModel(self, model, model_dir, model_name, run_id, n_epoch, mask_img):
+    def trainModel(self, model, model_dir, model_name, run_id, n_epoch, mask_img, continue_checkpoint=False):
 
+        print "Loading balanced data...")
         balancedData = list(np.load(self.balancedDataFileName))
         print "Loaded data with {} entries".format(len(balancedData))
 
@@ -154,10 +155,12 @@ class TrainingRecorder:
             img = cv2.bitwise_and(img,img,mask=mask)
             maskedData.append([img,key])
 
+        print "Extracting training and testing subset..."
         testSize = int(0.1*len(maskedData))
         train = maskedData[:-testSize]
         test = maskedData[-testSize:]
 
+        print "Reshaping training and testing subset..."
         X = np.array([i[0] for i in train]).reshape(-1, self.proc_width,self.proc_height,1)
         Y = np.array([i[1] for i in train])
 
@@ -166,12 +169,15 @@ class TrainingRecorder:
 
         #if os.path.exists('{}/{}.tflearn'.format(model_dir,model_name)):
         #    model.load('{}/{}.tflearn'.format(model_dir,model_name))
-        #elif os.path.exists('{}/checkpoint'.format(model_dir)):
-        #    fName = open('{}/checkpoint'.format(model_dir),'r').readlines()[0].split(": ")[1][1:-2]
-        #    model.load(fName)
+        if continue_checkpoint and os.path.exists('{}/checkpoint'.format(model_dir)):
+           fName = open('{}/checkpoint'.format(model_dir),'r').readlines()[0].split(": ")[1][1:-2]
+           model.load(fName)
+           print "Loaded checkpoint file to continue traiing!"
 
+        print "Start training."
         model.fit({'inputs':X},{'targets':Y}, n_epoch=n_epoch,
                   validation_set=({'inputs':test_X},{'targets':test_Y}),
                   snapshot_step=500, show_metric=True, run_id=run_id,
                   shuffle=True)
+        print "Sving trained model..."
         model.save('{}/{}.tflearn'.format(model_dir,model_name))

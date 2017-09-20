@@ -42,7 +42,7 @@ class System:
     def process(self):
 
         if keyboard.is_pressed('i'):
-            time.sleep(0.4)
+            time.sleep(0.2)
             if not keyboard.is_pressed('i'):
                 self.paused = not self.paused
                 if self.paused:
@@ -67,30 +67,32 @@ class System:
         # Predict model output for a single sample
         y = self.model.predict([img.reshape(self.proc_width,self.proc_height,1)])[0]
 
-        # Print prediction as number and as pretty barss
+        # Print prediction as number and as pretty bars
         printWidth=80
         print "-"*(printWidth+40)
         print "Prediction: {}".format(y)
         for idx,i in enumerate(y):
-            print ("{: <8}: {: <"+str(printWidth)+"} - {}%").format(self.onehot_names[idx],"|"*int(np.around(i*printWidth)),100*i )
+            print ("{: <8}: {: <"+str(printWidth)+"} - {}%").format(
+                   self.onehot_names[idx],"|"*int(np.around(i*printWidth)),100*i )
 
         # Release all keys
         for k in self.keys:
             keyboard.release(k)
 
-        # If confidence is below 50 %
+        # If confidence is below 50 %, y is zero everywere
         # Don't do anything
         if sum(y) == 0:
             print "Action: dont know ?!"
             return True
         # Map one hot vector back to key combination
-        # Use first keycombination for this type of steering as output
+        # Use first key combination for this type of steering as output
         keyOutput = self.keys_to_onehot[np.argmax(y)][0]
         # Print name of action
         print "Action: {}".format(self.onehot_names[np.argmax(y)])
-        # Press keys and print key namess
+        # Press keys and print key names
         print "Pressed keys:"
         for idx, k in enumerate(keyOutput):
+            # Press key at position idx ?
             if k == 1:
                 keyboard.press(self.keys[idx])
                 print self.keys[idx]

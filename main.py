@@ -27,7 +27,7 @@ OFFSET_Y = 50
 PROCESS_WIDTH = 135
 PROCESS_HEIGHT = 100
 
-INITIA_SLEEP=3
+INITIAL_SLEEP=3
 
 # Keys to be looked for
 KEYS=[
@@ -55,8 +55,13 @@ ONEHOT_NAMES = [
 
 MASK_IMG = 'mask.png'
 
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
-sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=True, allow_soft_placement=True))
+config=tf.ConfigProto()
+config.log_device_placement=True
+config.allow_soft_placement=True
+config.gpu_options.per_process_gpu_memory_fraction=0.5
+config.gpu_options.allow_growth = True
+
+sess = tf.Session(config=config)
 
 ID = "trackmania"
 EPOCHS = 7
@@ -65,6 +70,7 @@ MODEL_DIR = 'models'
 MODEL_NAME = 'model_mynet'
 MODEL = mynet(PROCESS_WIDTH,PROCESS_HEIGHT,len(KEYS_TO_ONEHOT),0.001,'{}/{}'.format(MODEL_DIR,MODEL_NAME),TENSORBOARD_DIR)
 RUN_NAME = "{}-epocs-{}-id-{}".format(MODEL_NAME,EPOCHS,ID)
+CONTINUE_FROM_CHECKPOINT=True
 
 def main():
     parser = argparse.ArgumentParser()
@@ -75,8 +81,8 @@ def main():
     args = parser.parse_args()
     print args
 
-    for i in range(INITIA_SLEEP):
-        print INITIA_SLEEP-i
+    for i in range(INITIAL_SLEEP):
+        print INITIAL_SLEEP-i
         time.sleep(1)
 
     if args.train:
@@ -92,7 +98,7 @@ def main():
 def runTraining(run_suffix):
     tr = Trainer.TrainingRecorder("trainData",KEYS,KEYS_TO_ONEHOT)
     tr.setupDimensions(REC_SCREEN_WIDTH,REC_SCREEN_HEIGHT,REC_OFFSET_X,REC_OFFSET_Y,PROCESS_WIDTH,PROCESS_HEIGHT)
-    tr.trainModel(MODEL,MODEL_DIR,MODEL_NAME,"{}_{}".format(RUN_NAME,run_suffix),EPOCHS,MASK_IMG)
+    tr.trainModel(MODEL,MODEL_DIR,MODEL_NAME,"{}_{}".format(RUN_NAME,run_suffix),EPOCHS,MASK_IMG,CONTINUE_FROM_CHECKPOINT)
 
 def runTrainingRecorder():
     tr = Trainer.TrainingRecorder("trainData",KEYS,KEYS_TO_ONEHOT)
