@@ -23,17 +23,16 @@ class System:
         if self.mask is None:
             print "Image mask not found"
             exit(1)
-        elif self.mask.shape[1] != screen_w or self.mask.shape[0] != screen_h:
+        elif self.mask.shape[1] != proc_width or self.mask.shape[0] != proc_height:
             print "Image mask has invalid size"
             exit(1)
         self.scc = MyUtils.ScreenCapture({'width': screen_w, 'top': screen_y, 'height': screen_h, 'left': screen_x})
 
-        #cv2.namedWindow( "process", cv2.WINDOW_NORMAL )
-        #cv2.resizeWindow('process', 600,600)
-        #cv2.waitKey(1)
+        cv2.namedWindow("input", cv2.WINDOW_NORMAL )
+        #cv2.resizeWindow('input', 600,600)
 
     def start(self):
-        self.predictHistory = []
+        self.y = []
         self.paused=False
 
     def stop(self):
@@ -58,37 +57,47 @@ class System:
         if self.paused:
             time.sleep(0.01)
             return False
-
+            
+        t = time.time()
         img = self.scc.grab()
         img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        img = cv2.bitwise_and(img,img,mask=self.mask)
         img = cv2.resize(img,(self.proc_width,self.proc_height))
-
+        img = cv2.bitwise_and(img,img,mask=self.mask)
+        #print "dt capture: {}".format(time.time()-t)
+        cv2.imshow("input",img)
+        cv2.waitKey(1)
+        #t = time.time()
         # Predict model output for a single sample
         y = self.model.predict([img.reshape(self.proc_width,self.proc_height,1)])[0]
-
+        #print "dt predict: {}".format(time.time()-t)
+        
+       # if len(self.y) > 0:
+       #     y = self.y*0.1+0.9*y
+       # self.y = y
+        
         # Print prediction as number and as pretty bars
-        printWidth=80
-        print "-"*(printWidth+40)
+        printWidth=40
+        print "-"*(printWidth+30)
         print "Prediction: {}".format(y)
         for idx,i in enumerate(y):
             print ("{: <8}: {: <"+str(printWidth)+"} - {}%").format(
                    self.onehot_names[idx],"|"*int(np.around(i*printWidth)),100*i )
 
-        # Release all keys
-        for k in self.keys:
-            keyboard.release(k)
-
         # If confidence is below 50 %, y is zero everywere
         # Don't do anything
-        if sum(y) == 0:
+        if max(y) < 0.5:
+            keyOutput = self.keys_to_onehot[0][0]
             print "Action: dont know ?!"
-            return True
-        # Map one hot vector back to key combination
-        # Use first key combination for this type of steering as output
-        keyOutput = self.keys_to_onehot[np.argmax(y)][0]
-        # Print name of action
-        print "Action: {}".format(self.onehot_names[np.argmax(y)])
+        else:
+            # Map one hot vector back to key combination
+            # Use first key combination for this type of steering as output
+            keyOutput = self.keys_to_onehot[np.argmax(y)][0]
+            # Print name of action
+            print "Action: {}".format(self.onehot_names[np.argmax(y)])
+        
+        # Release all keys
+        #for k in self.keys:
+
         # Press keys and print key names
         print "Pressed keys:"
         for idx, k in enumerate(keyOutput):
@@ -96,7 +105,9 @@ class System:
             if k == 1:
                 keyboard.press(self.keys[idx])
                 print self.keys[idx]
+            else:
+                keyboard.release(self.keys[idx])
 
-        print "-"*(printWidth+40)
+        print "-"*(printWidth+30)
 
         return True

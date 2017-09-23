@@ -29,10 +29,11 @@ class TrainingRecorder:
         self.proc_width= proc_width
         self.proc_height= proc_height
 
-    def start(self, interval):
+    def start(self, interval, normalized_keys):
         self.scc = MyUtils.ScreenCapture({'width': self.screen_w, 'top': self.screen_y, 'height': self.screen_h, 'left': self.screen_x})
         self.interval = interval
         self.last_time = time.time()
+        self.normalized_keys = normalized_keys
         self.trainData = []
         self.loadRawData()
         self.paused=False
@@ -79,12 +80,14 @@ class TrainingRecorder:
 
     def loadRawData(self):
         if os.path.exists(self.rawDataFileName):
+            print "Loading data..."
             self.trainData = list(np.load(self.rawDataFileName))
             print "Loaded data with {} entries".format(len(self.trainData))
         else:
             print "No prerecorded data to load."
 
     def balanceData(self):
+        print "Shuffeling raw data..."
         random.shuffle(self.trainData)
 
         remapped_keys_and_imgs = [[] for i in range(len(self.keys_to_onehot))]
@@ -106,7 +109,7 @@ class TrainingRecorder:
                     one_hot.append(0)
 
             if sum(one_hot) != 1:
-                print "One hot vector is empty! No keymapping found for keys: {}".format(keys)
+                print "No keymapping found for keys: {}".format(keys)
                 skippedCount+=1
             else:
                 remapped_keys_and_imgs[typeIdx].append([img,one_hot])
@@ -120,23 +123,33 @@ class TrainingRecorder:
         print "Done."
         print "Samples per type: " + str(map(len,remapped_keys_and_imgs))
         print "Skipped samples: " + str(skippedCount)
-        minCnt = min(map(len,remapped_keys_and_imgs))
-        print "Minimum samples per class: " + str(minCnt)
-        print "Balancing..."
+        lens = map(len,remapped_keys_and_imgs)
+        minCnt = lens[0]
+        for idx, i in enumerate(lens):
+            if not self.normalized_keys[idx]:
+                continue
+            if minCnt > i:
+                minCnt = i
+
+        print "Minimum samples per class (for normalization): " + str(minCnt)
+        print "Balancing and merging data..."
 
         # Merge data
         balancedData = [];
-        for d in remapped_keys_and_imgs:
-            balancedData.extend(d[:minCnt])
+        for idx, data in enumerate(remapped_keys_and_imgs):
+            if not self.normalized_keys[idx]:
+                balancedData.extend(data)
+            else:
+                balancedData.extend(data[:minCnt])
 
-        print("Saving balanced of size: {}".format(len(balancedData)))
+        print("Saving balanced data with {} samples...".format(len(balancedData)))
         random.shuffle(balancedData)
         np.save(self.balancedDataFileName,balancedData)
         print "Done."
 
     def trainModel(self, model, model_dir, model_name, run_id, n_epoch, mask_img, continue_checkpoint=False):
 
-        print "Loading balanced data...")
+        print "Loading balanced data..."
         balancedData = list(np.load(self.balancedDataFileName))
         print "Loaded data with {} entries".format(len(balancedData))
 
@@ -145,11 +158,10 @@ class TrainingRecorder:
         if mask is None:
             print "Image mask not found"
             exit(1)
-        elif mask.shape[1] != self.screen_w or mask.shape[0] != self.screen_h:
+        elif mask.shape[1] != self.proc_width or mask.shape[0] != self.proc_height:
             print "Image mask has invalid size"
             exit(1)
 
-        mask = cv2.resize(mask,(self.proc_width, self.proc_height))
         maskedData = []
         for img, key in balancedData:
             img = cv2.bitwise_and(img,img,mask=mask)
@@ -172,12 +184,13 @@ class TrainingRecorder:
         if continue_checkpoint and os.path.exists('{}/checkpoint'.format(model_dir)):
            fName = open('{}/checkpoint'.format(model_dir),'r').readlines()[0].split(": ")[1][1:-2]
            model.load(fName)
-           print "Loaded checkpoint file to continue traiing!"
+           print "Loaded checkpoint file to continue training!"
 
         print "Start training."
         model.fit({'inputs':X},{'targets':Y}, n_epoch=n_epoch,
                   validation_set=({'inputs':test_X},{'targets':test_Y}),
                   snapshot_step=500, show_metric=True, run_id=run_id,
                   shuffle=True)
-        print "Sving trained model..."
-        model.save('{}/{}.tflearn'.format(model_dir,model_name))
+        modelName = '{}/{}.tflearn'.format(model_dir,model_name)
+        print "Saving trained model as {}".format(modelName)
+        model.save(modelName)
