@@ -88,7 +88,7 @@ def main():
     for i in range(INITIAL_SLEEP):
         print INITIAL_SLEEP-i
         time.sleep(1)
-        
+
     if args.train:
         if args.suffix is None:
             print "Run name missing"
@@ -102,7 +102,7 @@ def main():
 def runTraining(suffix,epochs, continueFromCheckpoint):
     tr = Trainer.TrainingRecorder("trainData",KEYS,KEYS_TO_ONEHOT)
     tr.setupDimensions(REC_SCREEN_WIDTH,REC_SCREEN_HEIGHT,REC_OFFSET_X,REC_OFFSET_Y,PROCESS_WIDTH,PROCESS_HEIGHT)
-    tr.trainModel(MODEL,MODEL_DIR,MODEL_NAME,"{}-epocs-{}-id-{}".format(MODEL_NAME,epochs,suffix),epochs,MASK_IMG,continueFromCheckpoint)
+    tr.trainModel(MODEL,MODEL_DIR,MODEL_NAME,"{}-epochs-{}-id-{}".format(MODEL_NAME,epochs,suffix),epochs,MASK_IMG,continueFromCheckpoint)
 
 def runTrainingRecorder():
     tr = Trainer.TrainingRecorder("trainData",KEYS,KEYS_TO_ONEHOT)
