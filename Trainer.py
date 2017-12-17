@@ -7,6 +7,7 @@ import keyboard
 import os,sys
 
 import tflearn
+import tensorflow as tf
 
 import MyUtils
 
@@ -113,12 +114,12 @@ class TrainingRecorder:
                 skippedCount+=1
             else:
                 remapped_keys_and_imgs[typeIdx].append([img,one_hot])
-
-        #for  data in remapped_keys_and_imgs:
-        #    for img, keys in data:
-        #        cv2.imshow("img",img)
-        #        print keys
-        #        cv2.waitKey(25)
+        #
+        # for  data in remapped_keys_and_imgs:
+        #     for img, keys in data:
+        #         cv2.imshow("img",img)
+        #         print keys
+        #         cv2.waitKey(25)
 
         print "Done."
         print "Samples per type: " + str(map(len,remapped_keys_and_imgs))
@@ -166,17 +167,26 @@ class TrainingRecorder:
         for img, key in balancedData:
             img = cv2.bitwise_and(img,img,mask=mask)
             maskedData.append([img,key])
+        # Release memory
+        balancedData = None
 
         print "Extracting training and testing subset..."
         testSize = int(0.1*len(maskedData))
         train = maskedData[:-testSize]
         test = maskedData[-testSize:]
+        # Release memory
+        maskedData = None
 
         print "Reshaping training and testing subset..."
-        X = np.array([i[0] for i in train]).reshape(-1, self.proc_width,self.proc_height,1)
+
+        X = np.array([i[0] for i in train]).reshape(-1, self.proc_height,self.proc_width,1)
         Y = np.array([i[1] for i in train])
 
-        test_X = np.array([i[0] for i in test]).reshape(-1, self.proc_width,self.proc_height,1)
+        # for x in X:
+        #     cv2.imshow("img",x)
+        #     cv2.waitKey(25)
+
+        test_X = np.array([i[0] for i in test]).reshape(-1, self.proc_height,self.proc_width,1)
         test_Y = np.array([i[1] for i in test])
 
         #if os.path.exists('{}/{}.tflearn'.format(model_dir,model_name)):

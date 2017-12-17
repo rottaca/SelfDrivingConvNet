@@ -18,8 +18,23 @@ from tflearn.layers.normalization import local_response_normalization
 from tflearn.layers.estimator import regression
 from tflearn.optimizers import SGD
 
-def mynet(width, height, outputs, learning_rate, checkpoint_path, tensorboard_dir):
-    network = input_data(shape=[None, width, height , 1],name='inputs')
+def mynet(height, width, outputs, learning_rate, checkpoint_path, tensorboard_dir):
+    # Real-time image preprocessing
+    #img_prep = tflearn.ImagePreprocessing()
+    # Zero Center (With mean computed over the whole dataset)
+    #img_prep.add_featurewise_zero_center()
+    # STD Normalization (With std computed over the whole dataset)
+    #img_prep.add_featurewise_stdnorm()
+
+    # Data augmentation
+    img_aug = tflearn.ImageAugmentation()
+    img_aug.add_random_rotation(max_angle=10.0)
+    #img_aug.add_random_blur(sigma_max=3.0)
+    img_aug.add_random_crop((height, width), 10)
+
+    network = input_data(shape=[None, height, width , 1],name='inputs',
+                     #data_preprocessing=img_prep,
+                     data_augmentation=img_aug)
 
     network = conv_2d(network, 96, 11, strides=4, activation='leakyrelu')
     network = max_pool_2d(network, 3, strides=2)

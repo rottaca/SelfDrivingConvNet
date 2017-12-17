@@ -57,7 +57,7 @@ class System:
         if self.paused:
             time.sleep(0.01)
             return False
-            
+
         t = time.time()
         img = self.scc.grab()
         img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -68,13 +68,13 @@ class System:
         cv2.waitKey(1)
         #t = time.time()
         # Predict model output for a single sample
-        y = self.model.predict([img.reshape(self.proc_width,self.proc_height,1)])[0]
+        y = self.model.predict([img.reshape(self.proc_height,self.proc_width,1)])[0]
         #print "dt predict: {}".format(time.time()-t)
-        
+
        # if len(self.y) > 0:
        #     y = self.y*0.1+0.9*y
        # self.y = y
-        
+
         # Print prediction as number and as pretty bars
         printWidth=40
         print "-"*(printWidth+30)
@@ -94,7 +94,7 @@ class System:
             keyOutput = self.keys_to_onehot[np.argmax(y)][0]
             # Print name of action
             print "Action: {}".format(self.onehot_names[np.argmax(y)])
-        
+
         # Release all keys
         #for k in self.keys:
 

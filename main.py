@@ -72,7 +72,7 @@ sess = tf.Session(config=config)
 TENSORBOARD_DIR = "tensorboard/"
 MODEL_DIR = 'models'
 MODEL_NAME = 'model_mynet'
-MODEL = mynet(PROCESS_WIDTH,PROCESS_HEIGHT,len(KEYS_TO_ONEHOT),0.001,'{}/{}'.format(MODEL_DIR,MODEL_NAME),TENSORBOARD_DIR)
+MODEL = mynet(PROCESS_HEIGHT, PROCESS_WIDTH,len(KEYS_TO_ONEHOT),0.001,'{}/{}'.format(MODEL_DIR,MODEL_NAME),TENSORBOARD_DIR)
 
 def main():
     parser = argparse.ArgumentParser()
