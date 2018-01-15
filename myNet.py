@@ -32,9 +32,9 @@ def mynet(height, width, outputs, learning_rate, checkpoint_path, tensorboard_di
     #img_aug.add_random_blur(sigma_max=3.0)
     img_aug.add_random_crop((height, width), 10)
 
-    network = input_data(shape=[None, height, width , 1],name='inputs',
+    network = input_data(shape=[None, height, width , 1],name='inputs')#,
                      #data_preprocessing=img_prep,
-                     data_augmentation=img_aug)
+                     #data_augmentation=img_aug)
 
     network = conv_2d(network, 96, 11, strides=4, activation='leakyrelu')
     network = max_pool_2d(network, 3, strides=2)

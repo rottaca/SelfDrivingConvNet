@@ -67,6 +67,9 @@ class TrainingRecorder:
             img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
             img = cv2.resize(img,(self.proc_width,self.proc_height))
 
+            cv2.imshow("input",img)
+            cv2.waitKey(1)
+
             pressedKeys= []
             for k in self.keys:
                 pressedKeys.append(int(keyboard.is_pressed(k)))
